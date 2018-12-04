@@ -2,6 +2,8 @@
 
 **Requires Python 3.6 (or higher) and urllib3 (`pip install urllib3`).**
 
+## Usage
+
 To use, call this script from a command line with one or more subreddits that you want to find similar ones to. For example:
 
     python3 redditexpander.py me_irl metal_me_irl anime_irl
@@ -9,6 +11,10 @@ To use, call this script from a command line with one or more subreddits that yo
 Another example, if you want to discover new popular subs starting from `r/all`:
 
     python3 redditexpander.py all
+
+Results will be printed to the command line output and written to an HTML file (`result.html`).
+
+## How it works
 
 The script will look at the front page of each subreddit you provide and from there look at each OP's submission history to see where else they are posting. This has one major benefit and deficit:
 
