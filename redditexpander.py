@@ -32,8 +32,15 @@ def crawl(user):
 
 def printresults():
   print('Results:')
+  html=''
   for sub in sorted(RELATED.values(),key=lambda x:x['score'],reverse=True):
-    print('  '+PREFIX+'r/'+sub['name']+' '+str(sub['score']))
+    name='r/'+sub['name']
+    url=PREFIX+name
+    score=' ('+str(sub['score'])+')'
+    print('  '+url+score)
+    html+=f'<div><a href="{url}" target="_blank">{name+score}</a></div>'''
+  print(f'''<html><head><title>reddit expander</title></head>
+    <body>{html}</body></html>''',file=open('result.html','w'))
 
 urllib3.disable_warnings()
 crawled=set()
