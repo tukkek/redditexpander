@@ -32,30 +32,26 @@ def crawl(user):
     return
   for post in result['data']['children']:
     post=post['data']
-    add(post['subreddit'],post['score'])
-
+    add(post['subreddit'],post['subreddit_subscribers'])
 
 def printresults():
-  print('Results:')
+  #print('Results:')
   html=''
-  maxscore=max([x['score'] for x in RELATED.values()])
-  if maxscore<1:
-    maxscore=1
   for sub in sorted(RELATED.values(),key=lambda x:x['score'],reverse=True):
     name='r/'+sub['name']
     url=PREFIX+name
-    score=int(sub['score'])
-    score=f' ({round(100*score/maxscore)}%)'
-    print('  '+url+score)
+    score=f' ({int(sub["score"]):,})'
+    #print('  '+url+score)
     html+=f'<div><a href="{url}" target="_blank">{name+score}</a></div>'''
-  print(f'''<html><head><title>reddit expander</title></head>
+  style='<style>div{margin:.5em;display:inline-block;}</style>'
+  print(f'''<html><head><title>reddit expander</title>{style}</head>
     <body>{html}</body></html>''',file=open('result.html','w'))
 
 urllib3.disable_warnings()
 crawled=set()
 random.shuffle(SUBS)
 for sub in SUBS:
-  for post in getjson('r/'+sub)['data']['children']:
+  for post in getjson('r/'+sub.replace('r/','').replace('/',''))['data']['children']:
     user=post['data']['author']
     if not user in crawled:
       crawled.add(user)
