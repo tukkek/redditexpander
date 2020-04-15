@@ -6,9 +6,11 @@ if len(sys.argv)==1:
 
 DEBUG=False
 PREFIX='http://www.reddit.com/'
-SUBS=sys.argv[1:]
+SUBS=set(sub.lower().replace('r/','').replace('/','') for sub in sys.argv[1:])
 HTTP=urllib3.PoolManager()
-RELATED={}
+FOUND=set(SUBS)
+
+html=''
 
 def get(url):
   try:
@@ -21,40 +23,43 @@ def get(url):
 def getjson(url):
   return json.loads(get(PREFIX+url+'/.json'))
       
-def add(sub,score):
-  if sub not in SUBS and (sub not in RELATED or score>RELATED[sub]['score']):
-    RELATED[sub]={'name':sub,'score':score}
-      
 def crawl(user):
   user='u/'+user+'/submitted/'
   result=getjson(user)
-  if 'data' not in result:
-    return
-  for post in result['data']['children']:
-    post=post['data']
-    add(post['subreddit'],post['subreddit_subscribers'])
+  if 'data' in result:
+    addresults(post['data'] for post in result['data']['children'])
+
+def addresults(r):
+  global html
+  global FOUND
+  separate=False
+  for sub in sorted(r,key=lambda x:x['subreddit_subscribers'],reverse=True):
+    name=sub['subreddit'].lower()
+    '''if len(FOUND)>0:
+      print(name)
+      print(list(FOUND)[0])
+      print(list(SUBS)[0])'''
+    if name not in FOUND:
+      FOUND.add(name)
+      a=f'<a href="{PREFIX}r/{name}" target="_blank">{sub["subreddit"]} ({sub["subreddit_subscribers"]:,})</a>'
+      html+=f'<div>{a}</div>'
+      separate=True
+  if separate:
+    html+='<hr/>'
 
 def printresults():
-  #print('Results:')
-  html=''
-  for sub in sorted(RELATED.values(),key=lambda x:x['score'],reverse=True):
-    name='r/'+sub['name']
-    url=PREFIX+name
-    score=f' ({int(sub["score"]):,})'
-    #print('  '+url+score)
-    html+=f'<div><a href="{url}" target="_blank">{name+score}</a></div>'''
   style='<style>div{margin:.5em;display:inline-block;}</style>'
   print(f'''<html><head><title>reddit expander</title>{style}</head>
     <body>{html}</body></html>''',file=open('result.html','w'))
 
+print(f'Processing: {" ".join(SUBS)}')
 urllib3.disable_warnings()
-crawled=set()
-random.shuffle(SUBS)
+users=set()
 for sub in SUBS:
-  for post in getjson('r/'+sub.replace('r/','').replace('/',''))['data']['children']:
+  for post in getjson(f'r/{sub}')['data']['children']:
     user=post['data']['author']
-    if not user in crawled:
-      crawled.add(user)
+    if not user in users:
+      users.add(user)
       crawl(user)
       printresults()
       if DEBUG:
